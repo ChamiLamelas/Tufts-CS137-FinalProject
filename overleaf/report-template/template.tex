@@ -1,0 +1,114 @@
+\documentclass[11pt]{article}
+\usepackage[paper  = letterpaper,
+                     left   = 1.2in,
+                     right  = 1.2in,
+                     top    = 1.0in,
+                     bottom = 1.0in,
+                     ]{geometry}
+
+\usepackage[bitstream-charter]{mathdesign}
+\usepackage{amsmath}
+
+\usepackage{parskip}
+
+
+\title{C137 Project: How to Design Your Final Project (also a Template of Your Proposal and Your Report)}
+\author{Liping Liu}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+The final project is a good opportunity for you to apply your favorate deep learning techniques to your favorable problems! The requirement of the project can be summarized in one sentence: you need to explore something new in your project. The exploration can be one or more of these aspects:  
+\begin{itemize}
+\item applying deep models to a new problem;   
+\item devising a new learning model for a new or existing problem;    
+\item implementing a model that does NOT have official code; and 
+\item examining a particular learning technique.
+\end{itemize}
+
+In this introduction section, you should give a high-level introduction of your project. In particular, you need make clear your motivation and your plan. In the motivation part, your introduction should provide answers to the following two questions.  
+\begin{itemize}
+\item why the problem you are solving is important; 
+\item which part of the project is the exploration beyond the literature;
+\end{itemize}
+\textbf{Your project should be more than repeating what has been done in the liaterature.} 
+
+Then you need to give an overview of your project. This list of questions might be helpful for you to write the overview: 
+\begin{itemize}
+\item what is the structure of the learning problem (the input, the predicting target, and the data);   
+\item what models to you plan to use;  
+\item how to measure the success of your project; and   
+\item are there any your hypotheses you need, and how hour hypotheses are verified and disputed? 
+\end{itemize}
+Please do NOT itemize answers to these questions because you need a coherent introduction of your project, not merely answers to these questions. 
+
+\section{Related Work}
+
+You need to study the current literature of your planned work. You don't have to exhaust the literature, but you need to search related work with a few proper key words. If there are related work, you need to cite them. For example, if you want to cite the ``Deep Learning'' book \cite{goodfellow2016deep}, then you should use the ``\textbackslash cite'' command. This section helps you to establish the current status of known knowledge around the project. Particularly, you may consider to cite the research work solving the same problem. You can also write an short analysis showing how your work is different from existing work. 
+
+\section{Background}
+
+This section is optional. If your project is related to some standard formulations, and you need to introduce details to make your later models clear, you should consider to put these \textbf{standard} formulations here.  For example, if you are going to do some modification of GRU later, but you need to have an introduction of GRU first, then it belongs to this section. A negaive example is, your project will use a GRU layer in a standard way, then a detailed introduction of GRU is not needed. 
+
+
+\noindent \textbf{Proposal submission:} You should use this template to write your proposal, which should include the ``Introduction'' and ``Related Work'' sections. If you have a ``Background'' section, you should include it as well. Later sections will be complted in your final report. You should submit your proposal to GradeScope using the ``group submission'' option. 
+
+The rubrics for grading your proposal include: 
+\begin{itemize}
+\item 2 points if you have a clear motivation
+\item 3 points if you have a clear summary of your project 
+\item 3 points if you have done at least a rough literature study 
+\item 2 points for the readability of your project (you can use Grammarly to correct your grammar issues.) 
+\end{itemize}
+
+\section{Method}
+
+This section should be a detailed introduction of your project. This section should only contain your own work. For example, if you have modified a GRU architecture, this section should only have the modification of GRU. The original GRU structure should be put in the ``Background'' section.  
+
+In this section, you should have a rigorous introduction of your problem. This list of questions help you to do the formulation,
+\begin{itemize}
+\item What data do you have? How are they denoted ($X$ represents features)? Is every notation well defined (e.g. $X \in \mathcal{R}^d$)? 
+\item What type learning problem it is? What's the desired output from the model? 
+\item What's the input to the model? Is it the same as (part of) the data? Any processing before you can feed the data to the model?
+\item What the model? If the model is not a standard one, do you have a function form of the model?
+\item What's the loss function of the model? If it is not a standard problem, you need to use an equation to show that exactly. 
+\item Can you check all symbols to make sure that every one is well defined?
+\end{itemize}
+
+
+\section{Experiments}
+
+In this section, you should report your experiments, which are either related to your hypotheses or the evaluation measures of your models. Do NOT manipulate experiment result --  its OK that the experiment results do not support your hypotheses or expectations. For example, if your project is a modification of the GRU and argues that the motivation can improve its performance. However, the experiment results do not show so. In this section, you should report your observations in experiments. Then you should analyze the results in either of the following ways:
+\begin{itemize}
+\item the original argument is still correct, but experiments are not perfect. There is still a chance that the modification should work.  
+\item the original argument is invalid by observing experiment results. Some part of the argument is wrong. If there is a fix, you can also talk about further modifications.  
+\end{itemize}
+
+\section{Conclusion}
+
+This section should draw conclusions from this project and summarize the new findings you want your reader to learn.  
+
+\section{Contributions}
+
+If the team has more than person, then you should report who has done which part of work. Particularly, you should mention these work items. If multiple people participated in one item, then you can list the percentage of contribution of each person. 
+
+\begin{itemize}
+\item writing the proposal 
+\item coding
+\item running experiments and collecting data 
+\item discussions (of project ideas and experiment results) 
+\item writing the final report 
+\end{itemize}
+
+
+\noindent \textbf{Report submission:}  You should write your proposal with this template and submit it to GradeScope using the ``group submission'' option. 
+
+The grading of your report will consider the following aspects. First, the report should have a clear logic flow: the proposed work, the design of models, and the experiment results should be consistent. It is acceptable that the experiment results do not support the hypothesis at the beginning, but you still can write a coherent report stating your findings. Second, there should be sufficient work in this project. Here you should only report the ``work'' that is relevant to your hypothsis and your conclusion. You should accurately report what you have done so we can have a good evluation. Third, the level success of the project also contributes a small fraction of your total grade.  
+
+\bibliographystyle{plain}
+\bibliography{sample}
+
+\end{document}
