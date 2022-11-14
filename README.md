@@ -5,3 +5,4 @@
 Other resources: 
 * [ViTs in PyTorch](https://github.com/lucidrains/vit-pytorch)
 * [Towards Data Science Article on Above](https://towardsdatascience.com/vision-transformers-in-pytorch-43d13cb7ec7a)
+* [ViTs Hugging Face](https://huggingface.co/docs/transformers/model_doc/vit#vision-transformer-vit) - perhaps we can get checkpoints from here for self-supervised pretraining
