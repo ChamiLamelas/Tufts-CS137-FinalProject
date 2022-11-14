@@ -37,8 +37,8 @@ def draw_edge(drawer, start, end):
     drawer.line(rc_to_xy([start, end]), fill=0)    
 
 
-nodes = [(50, 93), (100, 143), (150, 98)]
-digits = [2, 4, 3]
+nodes = [(50, 93), (100, 43), (100, 143), (150, 98)]
+digits = [1, 2, 3, 4]
 
 im_arr = make_blank_im_arr()
 mnist_ims = [get_mnist_image(d) for d in digits]
@@ -48,6 +48,8 @@ im = Image.fromarray(im_arr)
 draw = ImageDraw.Draw(im)
 for n in nodes:
     circle_mnist(n, draw)
+draw_edge(draw, (78, 93), (100, 71))
 draw_edge(draw, (78, 121), (100, 143))
 draw_edge(draw, (128, 143), (150, 126))
+draw_edge(draw, (128, 171), (150, 188))
 im.save('../overleaf/images/sample_gentree.png')
