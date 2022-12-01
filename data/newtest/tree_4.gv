@@ -1,0 +1,18 @@
+digraph tree_4 {
+	graph [imagepath="C:\Users\chami\chami_folder\tufts\fall2022\comp137\project\Tufts-CS137-FinalProject\src\digit_tmp_dir"]
+	0 [label="" image="image0.png"]
+	1 [label="" image="image1.png"]
+	2 [label="" image="image2.png"]
+	3 [label="" image="image3.png"]
+	4 [label="" image="image4.png"]
+	5 [label="" image="image5.png"]
+	6 [label="" image="image6.png"]
+	7 [label="" image="image7.png"]
+	0 -> 1
+	0 -> 2
+	1 -> 3
+	1 -> 4
+	2 -> 5
+	2 -> 6
+	3 -> 7
+}

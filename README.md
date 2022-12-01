@@ -8,3 +8,5 @@ Other resources:
 * [ViTs Hugging Face](https://huggingface.co/docs/transformers/model_doc/vit#vision-transformer-vit) - perhaps we can get checkpoints from here for self-supervised pretraining
   * [YOLOS Hugging Face](https://huggingface.co/docs/transformers/model_doc/yolos)
   * [DETR Hugging Face](https://huggingface.co/docs/transformers/model_doc/detr)
+
+[Windows graphviz download](https://graphviz.org/download/)
