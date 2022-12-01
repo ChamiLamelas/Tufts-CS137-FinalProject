@@ -7,6 +7,10 @@ import random
 import argparse
 
 DIGIT_TEMP_DIR = "digit_tmp_dir"
+IMAGE_SUFFIX = ".gv.png"
+TREE_LABEL_SUFFIX = "_tree_label.npy"
+DIGIT_LABELS_SUFFIX = "_digit_labels.npy"
+DATANAME_PREFIX = "tree_"
 
 
 def get_cmdline_args():
@@ -43,20 +47,41 @@ class DigitPicker:
         return invert_image(self.mnist_split[idx][0])
 
 
-def gen_tree(num_nodes, img_name, picker, output_directory):
+def build_edge_map():
+    edge_map = dict()
+    k = 0
+    for i in range(10):
+        for j in range(i + 1, 10):
+            edge_map[(i, j)] = k
+            k += 1
+    return edge_map
+
+
+def gen_tree(num_nodes, img_name, picker, output_directory, edge_map):
     for n in range(num_nodes):
         im = picker.get_image(n)
         im.save(os.path.join(DIGIT_TEMP_DIR, f'image{n}.png'))
     dot = graphviz.Digraph(img_name, graph_attr={
                            'imagepath': os.path.join(os.getcwd(), DIGIT_TEMP_DIR)})
+    digit_labels = np.zeros(10)
+    tree_labels = np.zeros(45)
     for n in range(num_nodes):
         dot.node(str(n), "", image=f'image{n}.png')
+        digit_labels[n] = 1
     for n in range(num_nodes):
-        if 2 * n + 1 < num_nodes:
-            dot.edge(str(n), str(2 * n + 1))
-        if 2 * n + 2 < num_nodes:
-            dot.edge(str(n), str(2 * n + 2))
+        left = 2*n + 1
+        right = 2*n + 2
+        if left < num_nodes:
+            dot.edge(str(n), str(left))
+            tree_labels[edge_map[(n, left)]] = 1
+        if right < num_nodes:
+            dot.edge(str(n), str(right))
+            tree_labels[edge_map[(n, right)]] = 1
     dot.render(directory=output_directory, format='png')
+    np.save(os.path.join(output_directory,
+            f'{img_name}{TREE_LABEL_SUFFIX}'), tree_labels)
+    np.save(os.path.join(output_directory,
+            f'{img_name}{DIGIT_LABELS_SUFFIX}'), digit_labels)
     for n in range(num_nodes):
         os.remove(os.path.join(DIGIT_TEMP_DIR, f'image{n}.png'))
 
@@ -65,10 +90,11 @@ def gen_trees(output_directory, num_images, seed, split):
     picker = DigitPicker(split)
     random.seed(seed)
     os.mkdir(DIGIT_TEMP_DIR)
+    edge_map = build_edge_map()
     for i in range(num_images):
         num_nodes = random.randint(1, 11)
-        gen_tree(num_nodes, "tree_" + str(i), picker,
-                 os.path.join('..', 'data', output_directory))
+        gen_tree(num_nodes, DATANAME_PREFIX + str(i), picker,
+                 os.path.join('..', 'data', output_directory), edge_map)
     os.rmdir(DIGIT_TEMP_DIR)
 
 
