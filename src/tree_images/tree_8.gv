@@ -1,6 +1,0 @@
-digraph tree_8 {
-	graph [imagepath="C:\Users\chami\chami_folder\tufts\fall2022\comp137\project\Tufts-CS137-FinalProject\src\..\data\sample_mnist"]
-	0 [label="" image="image0.png"]
-	1 [label="" image="image1.png"]
-	0 -> 1
-}
