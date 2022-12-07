@@ -12,7 +12,8 @@ class TreeDataset(Dataset):
         self.num_elements = int(len(os.listdir(directory))/4)
         self.transforms = transforms.Compose([
             transforms.RandomVerticalFlip(),
-            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(90),
+            transforms.RandomApply([transforms.GaussianBlur(7)], p=0.5),
             transforms.ToTensor()
         ])
 
@@ -29,7 +30,6 @@ class TreeDataset(Dataset):
         digit_labels = np.load(os.path.join(
             self.directory, f'{image_name}{gd.DIGIT_LABELS_SUFFIX}'))
         return {
-            'image_name': image_name,
             'image': self.transforms(image), 
             # https://pytorch.org/docs/stable/generated/torch.from_numpy.html
             'tree_label': torch.from_numpy(tree_label), 
