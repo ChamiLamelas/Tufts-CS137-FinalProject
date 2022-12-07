@@ -3,18 +3,14 @@ import gen_dataset as gd
 import os
 from PIL import Image
 import numpy as np
-import torchvision.transforms as transforms
-import torch
-
+from torchvision.transforms import ToTensor
+import torch 
 
 class TreeDataset(Dataset):
     def __init__(self, directory):
         self.directory = directory
         self.num_elements = int(len(os.listdir(directory))/4)
-        self.transforms = transforms.Compose([
-            transforms.Grayscale(),
-            transforms.ToTensor()
-        ])
+        self.tensorconverter = ToTensor()
 
     def __len__(self):
         return self.num_elements
@@ -22,13 +18,18 @@ class TreeDataset(Dataset):
     def __getitem__(self, idx):
         image = Image.open(os.path.join(
             self.directory, f'{gd.DATANAME_PREFIX}{idx}{gd.IMAGE_SUFFIX}'))
-        image = image.convert('RGB')
-        tree_label = np.fromfile(os.path.join(
+        # https://numpy.org/doc/stable/reference/generated/numpy.load.html
+        tree_label = np.load(os.path.join(
             self.directory, f'{gd.DATANAME_PREFIX}{idx}{gd.TREE_LABEL_SUFFIX}'))
-        digit_labels = np.fromfile(os.path.join(
+        digit_labels = np.load(os.path.join(
             self.directory, f'{gd.DATANAME_PREFIX}{idx}{gd.DIGIT_LABELS_SUFFIX}'))
         return {
-            'image': torch.squeeze(self.transforms(image)), 
-            'tree_label': tree_label, 
-            'digit_labels': digit_labels
+            'image': self.tensorconverter(image), 
+            # https://pytorch.org/docs/stable/generated/torch.from_numpy.html
+            'tree_label': torch.from_numpy(tree_label), 
+            'digit_labels': torch.from_numpy(digit_labels)
         }
+
+if __name__ == '__main__':
+    dataset = TreeDataset(os.path.join('..', 'data', 'newtest2'))
+    print(dataset[0])

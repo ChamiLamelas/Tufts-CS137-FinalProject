@@ -14,7 +14,7 @@ class Graph:
         self.tree_labels = tree_labels
 
     def weight(self, u, v):
-        return 1 - (self.tree_labels[self.edge_map[(u, v)]] if (u,v) in self.edge_map else 0)
+        return 1 - (self.tree_labels[self.edge_map[(u, v)]] if (u, v) in self.edge_map else 0)
 
     def print(self):
         for u, adj in self.adj_lists.items():

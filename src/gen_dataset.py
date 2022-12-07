@@ -1,10 +1,15 @@
 import torchvision.datasets as datasets
 import graphviz
+# To install into conda on windows follow this answer
+# https://stackoverflow.com/a/47043173
+
 import os
 import numpy as np
 from PIL import Image
 import random
 import argparse
+import torch
+import torchvision.transforms as transforms
 
 DIGIT_TEMP_DIR = "digit_tmp_dir"
 IMAGE_SUFFIX = ".gv.png"
@@ -57,6 +62,29 @@ def build_edge_map():
     return edge_map
 
 
+def mod_img(image):
+    # https://stackoverflow.com/a/50332356
+    image = image.convert('RGB')
+    translist = transforms.Compose([
+        # https://pytorch.org/vision/stable/generated/torchvision.transforms.Grayscale.html#torchvision.transforms.Grayscale
+        transforms.Grayscale(),
+        transforms.ToTensor()
+    ])
+    tensor = torch.squeeze(translist(image))
+    imgrows = tensor.size()[0]
+    imgcols = tensor.size()[1]
+    assert(imgrows < 512 and imgcols < 512)
+    row_diff = 512 - imgrows
+    col_diff = 512 - imgcols
+    left_row_pad = int(row_diff / 2)
+    top_col_pad = int(col_diff / 2)
+    newtensor = torch.ones((512, 512), dtype=torch.float32)
+    newtensor[left_row_pad:left_row_pad + imgrows,
+              top_col_pad:top_col_pad + imgcols] = tensor
+    imgconverter = transforms.ToPILImage()
+    return imgconverter(newtensor)
+
+
 def gen_tree(num_nodes, img_name, picker, output_directory, edge_map):
     for n in range(num_nodes):
         im = picker.get_image(n)
@@ -84,6 +112,9 @@ def gen_tree(num_nodes, img_name, picker, output_directory, edge_map):
             f'{img_name}{DIGIT_LABELS_SUFFIX}'), digit_labels)
     for n in range(num_nodes):
         os.remove(os.path.join(DIGIT_TEMP_DIR, f'image{n}.png'))
+    img_loc = os.path.join(output_directory, f'{img_name}{IMAGE_SUFFIX}')
+    modded_img = mod_img(Image.open(img_loc))
+    modded_img.save(img_loc)
 
 
 def gen_trees(output_directory, num_images, seed, split):
