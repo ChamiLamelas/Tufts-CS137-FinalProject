@@ -1,6 +1,7 @@
 # Custom
 src/Test Notebook.ipynb
 models/
+data/trainset1
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
