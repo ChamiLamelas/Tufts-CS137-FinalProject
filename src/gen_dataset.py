@@ -91,8 +91,8 @@ def gen_tree(num_nodes, img_name, picker, output_directory, edge_map):
         im.save(os.path.join(DIGIT_TEMP_DIR, f'image{n}.png'))
     dot = graphviz.Digraph(img_name, graph_attr={
                            'imagepath': os.path.join(os.getcwd(), DIGIT_TEMP_DIR)})
-    digit_labels = np.zeros(10)
-    tree_labels = np.zeros(45)
+    digit_labels = np.zeros(10, dtype=np.int32)
+    tree_labels = np.zeros(45, dtype=np.int32)
     for n in range(num_nodes):
         dot.node(str(n), "", image=f'image{n}.png')
         digit_labels[n] = 1
