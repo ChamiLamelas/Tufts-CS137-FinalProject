@@ -47,7 +47,7 @@ class DigitPicker:
             self.label_indices.append(np.where(label_list == d)[0].tolist())
 
     def get_image(self, digit):
-        assert 0 <= digit <= 9
+        assert 0 <= digit <= 9, f'{digit} invalid'
         idx = random.choice(self.label_indices[digit])
         return invert_image(self.mnist_split[idx][0])
 
@@ -123,7 +123,7 @@ def gen_trees(output_directory, num_images, seed, split):
     os.mkdir(DIGIT_TEMP_DIR)
     edge_map = build_edge_map()
     for i in range(num_images):
-        num_nodes = random.randint(1, 11)
+        num_nodes = random.randint(1, 10)
         gen_tree(num_nodes, DATANAME_PREFIX + str(i), picker,
                  os.path.join('..', 'data', output_directory), edge_map)
     os.rmdir(DIGIT_TEMP_DIR)
