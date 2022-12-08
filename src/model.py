@@ -14,7 +14,7 @@ def get_device():
         return torch.device('cuda')
     else:
         print(f'Did not identify CUDA device')
-    return torch.device('cpu')
+        return torch.device('cpu')
 
 
 def digits_model():
@@ -28,7 +28,7 @@ def digits_model():
         models.vit_b_16(weights="ViT_B_16_Weights.IMAGENET1K_SWAG_E2E_V1"),
         nn.Linear(1000, 10)
     )
-    return model     
+    return model
 
 
 def tree_model():
@@ -36,33 +36,35 @@ def tree_model():
         models.vit_b_16(weights="ViT_B_16_Weights.IMAGENET1K_SWAG_E2E_V1"),
         nn.Linear(1000, 45)
     )
-    return model 
+    return model
+
 
 def untrained_digit_model():
     v = ViT(
-        image_size = 512,
-        patch_size = 32,
-        num_classes = 10,
-        dim = 1024,
-        depth = 6,
-        heads = 16,
-        mlp_dim = 2048,
-        dropout = 0.1,
-        emb_dropout = 0.1
+        image_size=512,
+        patch_size=32,
+        num_classes=10,
+        dim=1024,
+        depth=6,
+        heads=16,
+        mlp_dim=2048,
+        dropout=0.1,
+        emb_dropout=0.1
     )
     return v
 
+
 def untrained_tree_model():
     v = ViT(
-        image_size = 512,
-        patch_size = 32,
-        num_classes = 45,
-        dim = 1024,
-        depth = 6,
-        heads = 16,
-        mlp_dim = 2048,
-        dropout = 0.1,
-        emb_dropout = 0.1
+        image_size=512,
+        patch_size=32,
+        num_classes=45,
+        dim=1024,
+        depth=6,
+        heads=16,
+        mlp_dim=2048,
+        dropout=0.1,
+        emb_dropout=0.1
     )
     return v
 
@@ -73,8 +75,8 @@ def digits_predict(model, img):
     return (outputs >= 0.5).long()
 
 
-def iscorrect(outputs, labels):
-    return torch.all(outputs.cpu() == labels.cpu()).item()
+def batchcorrect(outputs, labels):
+    return torch.sum(torch.all(outputs.cpu() == labels.cpu(), dim=1)).item()
 
 
 def tree_predict(model, img, digits_model):
@@ -99,8 +101,8 @@ def predict(model, data_loader, device, config, digits_model):
                 outputs = digits_predict(model, img)
             else:
                 outputs = tree_predict(model, img, digits_model)
-            ncorrect += iscorrect(outputs, labels)
-            total += 1
+            ncorrect += batchcorrect(outputs, labels)
+            total += img.size()[0]
 
     return ncorrect / total
 
@@ -149,8 +151,9 @@ def train(model, learning_rate, epochs, train_loader, val_loader, device, model_
         train_loss.append(running_train_loss/nbatches)
         val_acc.append(curr_val_acc)
 
-        print(
-            f'Epoch {i+1} done, train loss: {train_loss[-1]:.4f} val acc: {curr_val_acc:.4f}')
+        if (i + 1) % 10 == 0 and i > 0:
+            print(
+                f'Epoch {i+1} done, train loss: {train_loss[-1]:.4f} val acc: {curr_val_acc:.4f}')
 
     np.save(os.path.join(
         model_dir, config['train_loss']), np.array(train_loss))
