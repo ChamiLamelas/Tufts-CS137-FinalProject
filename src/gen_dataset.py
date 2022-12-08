@@ -73,7 +73,11 @@ def mod_img(image):
     tensor = torch.squeeze(translist(image))
     imgrows = tensor.size()[0]
     imgcols = tensor.size()[1]
-    assert(imgrows < 512 and imgcols < 512)
+
+    if not (imgrows < 512 and imgcols < 512):
+        print("Bad size, returning none")
+        return None
+
     row_diff = 512 - imgrows
     col_diff = 512 - imgcols
     left_row_pad = int(row_diff / 2)
@@ -86,6 +90,18 @@ def mod_img(image):
 
 
 def gen_tree(num_nodes, img_name, picker, output_directory, edge_map):
+    shapes = ["ellipse", "circle", "box"]
+    shape_weights = [0.6, 0.2, 0.2]
+
+    edge_lens = [1, 2, 0.5]
+    edge_len_weights = [0.5, 0.25, 0.25]
+
+    heights = ["0.5", "0.25"]
+    height_weights = [0.5, 0.5]
+
+    widths = ["0.5", "0.25"]
+    width_weights = [0.5, 0.5]
+
     for n in range(num_nodes):
         im = picker.get_image(n)
         im.save(os.path.join(DIGIT_TEMP_DIR, f'image{n}.png'))
@@ -94,7 +110,7 @@ def gen_tree(num_nodes, img_name, picker, output_directory, edge_map):
     digit_labels = np.zeros(10, dtype=np.int32)
     tree_labels = np.zeros(45, dtype=np.int32)
     for n in range(num_nodes):
-        dot.node(str(n), "", image=f'image{n}.png')
+        dot.node(str(n), "", image=f'image{n}.png', shape=random.choices(shapes, shape_weights)[0], height=random.choices(heights, height_weights)[0], width=random.choices(widths, width_weights)[0])
         digit_labels[n] = 1
     for n in range(num_nodes):
         left = 2*n + 1
@@ -114,18 +130,25 @@ def gen_tree(num_nodes, img_name, picker, output_directory, edge_map):
         os.remove(os.path.join(DIGIT_TEMP_DIR, f'image{n}.png'))
     img_loc = os.path.join(output_directory, f'{img_name}{IMAGE_SUFFIX}')
     modded_img = mod_img(Image.open(img_loc))
-    modded_img.save(img_loc)
+
+    if modded_img is not None:
+        modded_img.save(img_loc)
 
 
 def gen_trees(output_directory, num_images, seed, split):
     picker = DigitPicker(split)
     random.seed(seed)
-    os.mkdir(DIGIT_TEMP_DIR)
+    try:
+        os.mkdir(DIGIT_TEMP_DIR)
+    except FileExistsError:
+        pass
     edge_map = build_edge_map()
-    for i in range(num_images):
+    i = 0
+    while(i < num_images):
         num_nodes = random.randint(1, 10)
-        gen_tree(num_nodes, DATANAME_PREFIX + str(i), picker,
-                 os.path.join('..', 'data', output_directory), edge_map)
+        if gen_tree(num_nodes, DATANAME_PREFIX + str(i), picker,
+                 os.path.join('..', 'data', output_directory), edge_map) is not None:
+            i += 1
     os.rmdir(DIGIT_TEMP_DIR)
 
 
