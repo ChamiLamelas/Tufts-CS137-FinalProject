@@ -5,6 +5,8 @@ from graphs import Graph, prims
 import os
 import numpy as np
 import torchvision.models as models
+import torchvision.transforms as transforms
+from torchvision.models import ResNet18_Weights
 
 
 def get_device():
@@ -69,6 +71,27 @@ def untrained_tree_model():
     return v
 
 
+def resnet_preprocess():
+    return transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
+                             0.229, 0.224, 0.225]),
+    ])
+
+def pretrained_resnet_model():
+    return torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', weights=ResNet18_Weights.DEFAULT)
+
+def make_resnet_model(pretrained):
+    # https://discuss.pytorch.org/t/how-to-modify-the-final-fc-layer-based-on-the-torch-model/766/25?page=2
+    # https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html
+    pretrained.fc = nn.Linear(512, 10)
+
+def tuned_resnet_model():
+    return torch.load(os.path.join('..', 'models', 'resnet', 'digit-model.pt'))
+
+
 def digits_predict(model, img):
     sigmoid = nn.Sigmoid()
     outputs = sigmoid(model(img))
@@ -107,7 +130,7 @@ def predict(model, data_loader, device, config, digits_model):
     return ncorrect / total
 
 
-def train(model, learning_rate, epochs, train_loader, val_loader, device, model_dir, digits_model):
+def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader, device, model_dir, digits_model):
     if digits_model is None:
         config = {'labels_key': 'digit_labels', 'model_file': 'digit-model.pt',
                   'train_loss': 'digit_train_loss.npy', 'val_acc': 'digit_val_acc.npy'}
@@ -115,7 +138,8 @@ def train(model, learning_rate, epochs, train_loader, val_loader, device, model_
         config = {'labels_key': 'tree_label', 'model_file': 'tree-model.pt',
                   'train_loss': 'tree_train_loss.npy', 'val_acc': 'tree_val_acc.npy'}
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     # https://stackoverflow.com/a/52859411
     # https://pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html
@@ -125,7 +149,7 @@ def train(model, learning_rate, epochs, train_loader, val_loader, device, model_
     train_loss = list()
     val_acc = list()
 
-    min_val_acc = None
+    max_val_acc = None
 
     for i in range(epochs):
         model.train()
@@ -145,8 +169,9 @@ def train(model, learning_rate, epochs, train_loader, val_loader, device, model_
             nbatches += 1
 
         curr_val_acc = predict(model, val_loader, device, config, digits_model)
-        if min_val_acc is None or curr_val_acc < min_val_acc:
+        if max_val_acc is None or curr_val_acc > max_val_acc:
             torch.save(model, os.path.join(model_dir, config['model_file']))
+            max_val_acc = curr_val_acc
 
         train_loss.append(running_train_loss/nbatches)
         val_acc.append(curr_val_acc)

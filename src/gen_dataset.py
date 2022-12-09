@@ -130,9 +130,10 @@ def gen_tree(num_nodes, img_name, picker, output_directory, edge_map):
         os.remove(os.path.join(DIGIT_TEMP_DIR, f'image{n}.png'))
     img_loc = os.path.join(output_directory, f'{img_name}{IMAGE_SUFFIX}')
     modded_img = mod_img(Image.open(img_loc))
-
     if modded_img is not None:
         modded_img.save(img_loc)
+        return True
+    return False
 
 
 def gen_trees(output_directory, num_images, seed, split):
@@ -147,7 +148,7 @@ def gen_trees(output_directory, num_images, seed, split):
     while(i < num_images):
         num_nodes = random.randint(1, 10)
         if gen_tree(num_nodes, DATANAME_PREFIX + str(i), picker,
-                 os.path.join('..', 'data', output_directory), edge_map) is not None:
+                 os.path.join('..', 'data', output_directory), edge_map):
             i += 1
     os.rmdir(DIGIT_TEMP_DIR)
 

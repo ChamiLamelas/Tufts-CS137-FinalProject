@@ -3,7 +3,6 @@ import gen_dataset as gd
 import os
 from PIL import Image
 import numpy as np
-import torchvision.transforms as transforms
 import torch
 
 
@@ -11,12 +10,6 @@ class TreeDataset(Dataset):
     def __init__(self, directory, preprocess):
         self.directory = directory
         self.num_elements = int(len(os.listdir(directory))/4)
-        self.transforms = transforms.Compose([
-            transforms.RandomVerticalFlip(),
-            transforms.RandomRotation(90),
-            transforms.RandomApply([transforms.GaussianBlur(7)], p=0.5),
-            transforms.ToTensor()
-        ])
         self.preprocess = preprocess
 
     def __len__(self):
@@ -32,7 +25,7 @@ class TreeDataset(Dataset):
         digit_labels = np.load(os.path.join(
             self.directory, f'{image_name}{gd.DIGIT_LABELS_SUFFIX}'))
         return {
-            'image': self.preprocess(self.transforms(image)),
+            'image': self.preprocess(image),
             # https://pytorch.org/docs/stable/generated/torch.from_numpy.html
             'tree_label': torch.from_numpy(tree_label),
             'digit_labels': torch.from_numpy(digit_labels)

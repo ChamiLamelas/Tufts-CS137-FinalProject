@@ -1,6 +1,6 @@
 # Custom
 models/
-data/trainset1
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
