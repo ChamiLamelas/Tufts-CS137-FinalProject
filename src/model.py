@@ -99,6 +99,9 @@ def tuned_resnet_model():
 def scratch_trained_d2l_vit_digits_model():
     return torch.load(os.path.join('..', 'models', 'd2lvit', 'digit-model.pt'))
 
+def pretrained_pytorch_vit_digits_model():
+    return torch.load(os.path.join('..', 'models', 'finetune', 'digit-model.pt'))
+
 def digits_predict(model, img):
     sigmoid = nn.Sigmoid()
     outputs = sigmoid(model(img))
