@@ -108,8 +108,11 @@ def digits_predict(model, img):
     return (outputs >= 0.5).long()
 
 
-def batchcorrect(outputs, labels):
-    return torch.sum(torch.all(outputs.cpu() == labels.cpu(), dim=1)).item()
+def batchcorrect(outputs, labels, names, show_failing):
+    equality = torch.all(outputs.cpu() == labels.cpu(), dim=1)
+    if show_failing:
+        print([n for i, n in enumerate(names) if not equality[i]])
+    return torch.sum(equality).item()
 
 
 def tree_predict(model, img_batch, digits_model):
@@ -122,7 +125,7 @@ def tree_predict(model, img_batch, digits_model):
     return torch.from_numpy(np.array(outputs))
 
 
-def predict(model, data_loader, device, config, digits_model):
+def predict(model, data_loader, device, config, digits_model, show_failing=False):
     model.eval()
 
     with torch.no_grad():
@@ -133,17 +136,19 @@ def predict(model, data_loader, device, config, digits_model):
         for data in data_loader:
             img = data['image'].to(device)
             labels = data[config['labels_key']].to(device)
+            names = data['img_name']
             if digits_model is None:
                 outputs = digits_predict(model, img)
             else:
                 outputs = tree_predict(model, img, digits_model)
-            ncorrect += batchcorrect(outputs, labels)
+            ncorrect += batchcorrect(outputs, labels, names, show_failing)
             total += img.size()[0]
 
     return ncorrect / total
 
 
-def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader, device, model_dir, digits_model):
+def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader, 
+            device, model_dir, digits_model, show_failing=False):
     if not os.path.isdir(model_dir):
         os.mkdir(model_dir)
 
@@ -184,7 +189,9 @@ def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader, 
             running_train_loss += loss.cpu().item()
             nbatches += 1
 
-        curr_val_acc = predict(model, val_loader, device, config, digits_model)
+        info_epoch = (i + 1) % 10 == 0 and i > 0
+
+        curr_val_acc = predict(model, val_loader, device, config, digits_model, show_failing = info_epoch and show_failing)
         if max_val_acc is None or curr_val_acc > max_val_acc:
             torch.save(model, os.path.join(model_dir, config['model_file']))
             max_val_acc = curr_val_acc
@@ -192,7 +199,7 @@ def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader, 
         train_loss.append(running_train_loss/nbatches)
         val_acc.append(curr_val_acc)
 
-        if (i + 1) % 10 == 0 and i > 0:
+        if info_epoch:
             print(
                 f'Epoch {i+1} done, train loss: {train_loss[-1]:.4f} val acc: {curr_val_acc:.4f}')
 

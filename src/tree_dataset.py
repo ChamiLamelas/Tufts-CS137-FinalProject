@@ -5,6 +5,7 @@ from PIL import Image
 import numpy as np
 import torch
 import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
 
 
 class TreeDataset(Dataset):
@@ -26,6 +27,7 @@ class TreeDataset(Dataset):
         digit_labels = np.load(os.path.join(
             self.directory, f'{image_name}{gd.DIGIT_LABELS_SUFFIX}'))
         return {
+            'img_name': image_name,
             'image': self.preprocess(image),
             # https://pytorch.org/docs/stable/generated/torch.from_numpy.html
             'tree_label': torch.from_numpy(tree_label),
@@ -38,5 +40,9 @@ def show_img(tensor):
 
 
 if __name__ == '__main__':
-    dataset = TreeDataset(os.path.join('..', 'data', 'newtest2'))
+    dataset = TreeDataset(os.path.join('..', 'data', 'newtest2'), preprocess = transforms.ToTensor())
     print(dataset[0])
+
+    dataloader = DataLoader(dataset, batch_size=2)
+    batch = next(iter(dataloader))
+    print(batch['img_name'])
