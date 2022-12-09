@@ -4,6 +4,7 @@ import os
 from PIL import Image
 import numpy as np
 import torch
+import torchvision.transforms as transforms
 
 
 class TreeDataset(Dataset):
@@ -30,6 +31,10 @@ class TreeDataset(Dataset):
             'tree_label': torch.from_numpy(tree_label),
             'digit_labels': torch.from_numpy(digit_labels)
         }
+
+def show_img(tensor):
+    image = transforms.ToPILImage()(tensor)
+    image.show()
 
 
 if __name__ == '__main__':

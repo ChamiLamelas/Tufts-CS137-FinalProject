@@ -18,6 +18,11 @@ def get_device():
         print(f'Did not identify CUDA device')
         return torch.device('cpu')
 
+def nice_time_print(s):
+    s = int(s)
+    min = int(s/60)
+    sec = s % 60
+    print(f'{min}m {sec}s')
 
 def digits_model():
     """
@@ -131,6 +136,9 @@ def predict(model, data_loader, device, config, digits_model):
 
 
 def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader, device, model_dir, digits_model):
+    if not os.path.isdir(model_dir):
+        os.mkdir(model_dir)
+
     if digits_model is None:
         config = {'labels_key': 'digit_labels', 'model_file': 'digit-model.pt',
                   'train_loss': 'digit_train_loss.npy', 'val_acc': 'digit_val_acc.npy'}
