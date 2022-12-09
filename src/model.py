@@ -96,6 +96,8 @@ def make_resnet_model(pretrained):
 def tuned_resnet_model():
     return torch.load(os.path.join('..', 'models', 'resnet', 'digit-model.pt'))
 
+def scratch_trained_d2l_vit_digits_model():
+    return torch.load(os.path.join('..', 'models', 'd2lvit', 'digit-model.pt'))
 
 def digits_predict(model, img):
     sigmoid = nn.Sigmoid()
@@ -107,11 +109,14 @@ def batchcorrect(outputs, labels):
     return torch.sum(torch.all(outputs.cpu() == labels.cpu(), dim=1)).item()
 
 
-def tree_predict(model, img, digits_model):
-    tree_outputs = digits_predict(model, img)
-    digit_outputs = digits_predict(digits_model, img)
-    g = Graph(digit_outputs, tree_outputs)
-    return torch.from_numpy(prims(g))
+def tree_predict(model, img_batch, digits_model):
+    tree_outputs = digits_predict(model, img_batch)
+    digit_outputs = digits_predict(digits_model, img_batch)
+    outputs = list()
+    for tree_output, digit_output in zip(tree_outputs, digit_outputs):
+        g = Graph(digit_output, tree_output)
+        outputs.append(prims(g))
+    return torch.from_numpy(np.array(outputs))
 
 
 def predict(model, data_loader, device, config, digits_model):
