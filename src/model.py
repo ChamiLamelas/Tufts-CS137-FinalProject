@@ -18,11 +18,13 @@ def get_device():
         print(f'Did not identify CUDA device')
         return torch.device('cpu')
 
+
 def nice_time_print(s):
     s = int(s)
     min = int(s/60)
     sec = s % 60
     print(f'{min}m {sec}s')
+
 
 def digits_model():
     """
@@ -85,22 +87,28 @@ def resnet_preprocess():
                              0.229, 0.224, 0.225]),
     ])
 
+
 def pretrained_resnet_model():
     return torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', weights=ResNet18_Weights.DEFAULT)
+
 
 def make_resnet_model(pretrained):
     # https://discuss.pytorch.org/t/how-to-modify-the-final-fc-layer-based-on-the-torch-model/766/25?page=2
     # https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html
     pretrained.fc = nn.Linear(512, 10)
 
+
 def tuned_resnet_model():
     return torch.load(os.path.join('..', 'models', 'resnet', 'digit-model.pt'))
+
 
 def scratch_trained_d2l_vit_digits_model():
     return torch.load(os.path.join('..', 'models', 'd2lvit', 'digit-model.pt'))
 
+
 def pretrained_pytorch_vit_digits_model():
     return torch.load(os.path.join('..', 'models', 'finetune', 'digit-model.pt'))
+
 
 def digits_predict(model, img):
     sigmoid = nn.Sigmoid()
@@ -111,12 +119,13 @@ def digits_predict(model, img):
 def batchcorrect(outputs, labels, names, show_failing):
     equality = torch.all(outputs.cpu() == labels.cpu(), dim=1)
     if show_failing:
-        print([n for i, n in enumerate(names) if not equality[i]])
+        print("\n".join(f'{n}: {output}' for i, (n, output) in enumerate(
+            zip(names, outputs)) if not equality[i]))
     return torch.sum(equality).item()
 
 
 def tree_predict(model, img_batch, digits_model):
-    tree_outputs = digits_predict(model, img_batch)
+    tree_outputs = nn.Sigmoid()(model(img_batch))
     digit_outputs = digits_predict(digits_model, img_batch)
     outputs = list()
     for tree_output, digit_output in zip(tree_outputs, digit_outputs):
@@ -147,8 +156,12 @@ def predict(model, data_loader, device, config, digits_model, show_failing=False
     return ncorrect / total
 
 
-def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader, 
-            device, model_dir, digits_model, show_failing=False):
+def float_eqs(f1, f2):
+    return abs(f1 - f2) < (10 ** (-6))
+
+
+def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader,
+          device, model_dir, digits_model, show_failing=False):
     if not os.path.isdir(model_dir):
         os.mkdir(model_dir)
 
@@ -170,6 +183,7 @@ def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader,
     train_loss = list()
     val_acc = list()
 
+    min_train_loss = None
     max_val_acc = None
 
     for i in range(epochs):
@@ -191,12 +205,21 @@ def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader,
 
         info_epoch = (i + 1) % 10 == 0 and i > 0
 
-        curr_val_acc = predict(model, val_loader, device, config, digits_model, show_failing = info_epoch and show_failing)
-        if max_val_acc is None or curr_val_acc > max_val_acc:
-            torch.save(model, os.path.join(model_dir, config['model_file']))
-            max_val_acc = curr_val_acc
+        curr_train_loss = running_train_loss/nbatches
+        curr_val_acc = predict(model, val_loader, device, config,
+                               digits_model, show_failing=info_epoch and show_failing)
 
-        train_loss.append(running_train_loss/nbatches)
+        # save 1st epoch model, if model has better val acc, or has equal val acc and less train loss
+        if max_val_acc is None or curr_val_acc > max_val_acc or (float_eqs(curr_val_acc, max_val_acc) and curr_train_loss < min_train_loss):
+            torch.save(model, os.path.join(model_dir, config['model_file']))
+
+        # update tracked metrics
+        if max_val_acc is None or curr_val_acc > max_val_acc:
+            max_val_acc = curr_val_acc
+        if min_train_loss is None or curr_train_loss < min_train_loss:
+            min_train_loss = curr_train_loss
+
+        train_loss.append(curr_train_loss)
         val_acc.append(curr_val_acc)
 
         if info_epoch:
