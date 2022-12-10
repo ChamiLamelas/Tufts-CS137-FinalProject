@@ -90,17 +90,20 @@ def mod_img(image):
 
 
 def gen_tree(num_nodes, img_name, picker, output_directory, edge_map):
-    shapes = ["ellipse", "circle", "box"]
-    shape_weights = [0.6, 0.2, 0.2]
+    shapes = ["ellipse", "circle", "box", "none"]
+    shape_weights = [0.4, 0.2, 0.2, 0.2]
 
-    edge_lens = [1, 2, 0.5]
-    edge_len_weights = [0.5, 0.25, 0.25]
+    pen_widths = ["1",  "2", "0.5"]
+    pen_width_weights = [0.5, 0.25, 0.25]
 
     heights = ["0.5", "0.25"]
     height_weights = [0.5, 0.5]
 
     widths = ["0.5", "0.25"]
     width_weights = [0.5, 0.5]
+
+    arrow_shapes = ["normal", "none"]
+    arrow_shape_weights = [0.5, 0.5]
 
     for n in range(num_nodes):
         im = picker.get_image(n)
@@ -116,10 +119,10 @@ def gen_tree(num_nodes, img_name, picker, output_directory, edge_map):
         left = 2*n + 1
         right = 2*n + 2
         if left < num_nodes:
-            dot.edge(str(n), str(left))
+            dot.edge(str(n), str(left), arrowhead=random.choices(arrow_shapes, arrow_shape_weights)[0], penwidth=random.choices(pen_widths, pen_width_weights)[0])
             tree_labels[edge_map[(n, left)]] = 1
         if right < num_nodes:
-            dot.edge(str(n), str(right))
+            dot.edge(str(n), str(right), arrowhead=random.choices(arrow_shapes, arrow_shape_weights)[0], penwidth=random.choices(pen_widths, pen_width_weights)[0])
             tree_labels[edge_map[(n, right)]] = 1
     dot.render(directory=output_directory, format='png')
     np.save(os.path.join(output_directory,
