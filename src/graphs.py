@@ -60,5 +60,9 @@ def main():
     tree = prims(g)
     print(tree)
 
+    # change 4,9 if we're interested in indices for other indexes
+    edge_map = build_edge_map()
+    print(edge_map[(4,9)])
+
 if __name__ == '__main__':
     main()
