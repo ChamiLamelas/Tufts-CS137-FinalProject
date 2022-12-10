@@ -8,6 +8,9 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 from torchvision.models import ResNet18_Weights
 
+# https://pytorch.org/vision/main/models/generated/torchvision.models.vit_b_16.html
+# https://pytorch.org/vision/master/models.html
+# https://discuss.pytorch.org/t/how-to-access-latest-torchvision-models-e-g-vit/145880
 
 def get_device():
     if torch.cuda.is_available():
@@ -24,29 +27,6 @@ def nice_time_print(s):
     min = int(s/60)
     sec = s % 60
     print(f'{min}m {sec}s')
-
-
-def digits_model():
-    """
-    https://pytorch.org/vision/main/models/generated/torchvision.models.vit_b_16.html
-    https://pytorch.org/vision/master/models.html
-    https://discuss.pytorch.org/t/how-to-access-latest-torchvision-models-e-g-vit/145880
-    """
-
-    model = nn.Sequential(
-        models.vit_b_16(weights="ViT_B_16_Weights.IMAGENET1K_SWAG_E2E_V1"),
-        nn.Linear(1000, 10)
-    )
-    return model
-
-
-def tree_model():
-    model = nn.Sequential(
-        models.vit_b_16(weights="ViT_B_16_Weights.IMAGENET1K_SWAG_E2E_V1"),
-        nn.Linear(1000, 45)
-    )
-    return model
-
 
 def untrained_digit_model():
     v = ViT(
@@ -102,14 +82,6 @@ def tuned_resnet_model():
     return torch.load(os.path.join('..', 'models', 'resnet', 'digit-model.pt'))
 
 
-def scratch_trained_d2l_vit_digits_model():
-    return torch.load(os.path.join('..', 'models', 'd2lvit', 'digit-model.pt'))
-
-
-def pretrained_pytorch_vit_digits_model():
-    return torch.load(os.path.join('..', 'models', 'finetune', 'digit-model.pt'))
-
-
 def digits_predict(model, img):
     sigmoid = nn.Sigmoid()
     outputs = sigmoid(model(img))
@@ -119,8 +91,9 @@ def digits_predict(model, img):
 def batchcorrect(outputs, labels, names, show_failing):
     equality = torch.all(outputs.cpu() == labels.cpu(), dim=1)
     if show_failing:
-        print("\n".join(f'{n}: {output}' for i, (n, output) in enumerate(
-            zip(names, outputs)) if not equality[i]))
+        out = [f'{n}: {output}' for i, (n, output) in enumerate(zip(names, outputs)) if not equality[i]]
+        if len(out) > 0:
+            print("\n".join(out))
     return torch.sum(equality).item()
 
 
@@ -134,7 +107,7 @@ def tree_predict(model, img_batch, digits_model):
     return torch.from_numpy(np.array(outputs))
 
 
-def predict(model, data_loader, device, config, digits_model, show_failing=False):
+def predict(model, data_loader, device, config, digits_model, show_failing=False, use_prims=True):
     model.eval()
 
     with torch.no_grad():
@@ -149,7 +122,8 @@ def predict(model, data_loader, device, config, digits_model, show_failing=False
             if digits_model is None:
                 outputs = digits_predict(model, img)
             else:
-                outputs = tree_predict(model, img, digits_model)
+                outputs = tree_predict(
+                    model, img, digits_model) if use_prims else digits_predict(model, img)
             ncorrect += batchcorrect(outputs, labels, names, show_failing)
             total += img.size()[0]
 
@@ -161,7 +135,7 @@ def float_eqs(f1, f2):
 
 
 def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader,
-          device, model_dir, digits_model, show_failing=False):
+          device, model_dir, digits_model, show_failing=False, use_prims=True):
     if not os.path.isdir(model_dir):
         os.mkdir(model_dir)
 
@@ -207,7 +181,7 @@ def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader,
 
         curr_train_loss = running_train_loss/nbatches
         curr_val_acc = predict(model, val_loader, device, config,
-                               digits_model, show_failing=info_epoch and show_failing)
+                               digits_model, info_epoch and show_failing, use_prims)
 
         # save 1st epoch model, if model has better val acc, or has equal val acc and less train loss
         if max_val_acc is None or curr_val_acc > max_val_acc or (float_eqs(curr_val_acc, max_val_acc) and curr_train_loss < min_train_loss):
