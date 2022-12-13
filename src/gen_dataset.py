@@ -10,6 +10,9 @@ import random
 import argparse
 import torch
 import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+
+from trees import Node
 
 DIGIT_TEMP_DIR = "digit_tmp_dir"
 IMAGE_SUFFIX = ".gv.png"
@@ -89,6 +92,109 @@ def mod_img(image):
     return imgconverter(newtensor)
 
 
+def draw_nodes(graph, node, edge_map, digit_labels, tree_labels):
+    shapes = ["ellipse", "circle", "box", "none"]
+    shape_weights = [0.4, 0.2, 0.2, 0.2]
+
+    pen_widths = ["1", "2", "0.5"]
+    pen_width_weights = [0.5, 0.25, 0.25]
+
+    heights = ["0.5", "0.25"]
+    height_weights = [0.5, 0.5]
+
+    widths = ["0.5", "0.25"]
+    width_weights = [0.5, 0.5]
+
+    arrow_shapes = ["normal", "none"]
+    arrow_shape_weights = [0.5, 0.5]
+
+    tree_size = 0
+
+    if node is None:
+        return tree_size
+    graph.node(str(node.data), "", image=f'image{node.data}.png', shape=random.choices(shapes, shape_weights)[0], height=random.choices(heights, height_weights)[0], width=random.choices(widths, width_weights)[0])
+    tree_size += 1
+    digit_labels[node.data] = 1
+    tree_size += draw_nodes(graph, node.left, edge_map, digit_labels, tree_labels)
+    tree_size += draw_nodes(graph, node.right, edge_map, digit_labels, tree_labels)
+
+    if not node.left is None:
+        graph.edge(str(node.data), str(node.left.data), arrowhead=random.choices(arrow_shapes, arrow_shape_weights)[0], penwidth=random.choices(pen_widths, pen_width_weights)[0])
+        tree_labels[edge_map[(node.data, node.left.data)]] = 1
+
+    if not node.right is None:
+        graph.edge(str(node.data), str(node.right.data), arrowhead=random.choices(arrow_shapes, arrow_shape_weights)[0], penwidth=random.choices(pen_widths, pen_width_weights)[0])
+        tree_labels[edge_map[(node.data, node.right.data)]] = 1
+
+    return tree_size
+
+def tree_to_graphviz(root_node, img_name, picker, output_directory, edge_map):
+    for n in range(10):
+        im = picker.get_image(n)
+        im.save(os.path.join(DIGIT_TEMP_DIR, f'image{n}.png'))
+
+    dot = graphviz.Digraph(img_name, graph_attr={'imagepath': os.path.join(os.getcwd(), DIGIT_TEMP_DIR)})
+
+    digit_labels = np.zeros(10, dtype=np.int32)
+    tree_labels = np.zeros(45, dtype=np.int32)
+
+    tree_size = draw_nodes(dot, root_node, edge_map, digit_labels, tree_labels)
+    size_dist[tree_size] += 1
+
+    dot.render(directory=output_directory, format='png')
+    np.save(os.path.join(output_directory,
+                         f'{img_name}{TREE_LABEL_SUFFIX}'), tree_labels)
+    np.save(os.path.join(output_directory,
+                         f'{img_name}{DIGIT_LABELS_SUFFIX}'), digit_labels)
+
+    for n in range(10):
+        os.remove(os.path.join(DIGIT_TEMP_DIR, f'image{n}.png'))
+    img_loc = os.path.join(output_directory, f'{img_name}{IMAGE_SUFFIX}')
+    modded_img = mod_img(Image.open(img_loc))
+    if modded_img is not None:
+        modded_img.save(img_loc)
+        return True
+
+    return dot
+
+
+def gen_tree_variety():
+    root_node = Node(rand_val(0))
+    prob_gen_children(root_node, root_node.data + 1, 0.95)
+
+    return root_node
+
+# Return N such that min_val <= N <= 9
+def rand_val(min_val):
+    val = np.random.normal(loc=0.0, scale=5.0)
+    val = int(max(min_val, min(abs(val), 9)))
+    return val
+
+
+def prob_gen_children(node, min_val, child_chance):
+    if min_val >= 9:
+        return min_val
+    if random.random() < child_chance:
+        left_data = rand_val(min_val)
+        node.left = Node(left_data)
+        min_val = left_data + 1
+    if min_val >= 9:
+        return min_val
+    if random.random() < child_chance:
+        right_data = rand_val(min_val)
+        node.right = Node(right_data)
+        min_val = right_data + 1
+    if min_val >= 9:
+        return min_val
+
+    if not node.left is None:
+        min_val = prob_gen_children(node.left, min_val, child_chance * 0.5)
+    if not node.right is None:
+        min_val = prob_gen_children(node.right, min_val, child_chance * 0.5)
+
+    return min_val
+
+
 def gen_tree(num_nodes, img_name, picker, output_directory, edge_map):
     shapes = ["ellipse", "circle", "box", "none"]
     shape_weights = [0.4, 0.2, 0.2, 0.2]
@@ -156,10 +262,34 @@ def gen_trees(output_directory, num_images, seed, split):
     os.rmdir(DIGIT_TEMP_DIR)
 
 
+
+size_dist = [0] * 11
+def gen_trees_variety(output_directory, num_images, seed, split):
+    picker = DigitPicker(split)
+    random.seed(seed)
+    try:
+        os.mkdir(DIGIT_TEMP_DIR)
+    except FileExistsError:
+        pass
+    edge_map = build_edge_map()
+    i = 0
+    while i < num_images:
+        if tree_to_graphviz(gen_tree_variety(), DATANAME_PREFIX + str(i), picker, os.path.join('..', 'data', output_directory), edge_map):
+            i += 1
+    os.rmdir(DIGIT_TEMP_DIR)
+
+
+
 def main():
     output_directory, num_images, seed, split = get_cmdline_args()
-    gen_trees(output_directory, num_images, seed, split)
+    # gen_trees(output_directory, num_images, seed, split)
+    gen_trees_variety(output_directory, num_images, seed, split)
 
+    print(size_dist)
+    plt.stairs(size_dist, fill=True)
+    plt.xlabel("Number of Nodes")
+    plt.ylabel("Frequency")
+    plt.show()
 
 if __name__ == '__main__':
     main()
