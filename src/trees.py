@@ -1,5 +1,8 @@
+# Authors: Chami Lamelas, Ryan Polhemus
+
 from heapq import heapify
 from copy import deepcopy
+
 
 class Node:
     def __init__(self, data):
@@ -12,6 +15,8 @@ def count(root):
     return 0 if root is None else 1 + count(root.left) + count(root.right)
 
 # builds dict (edge tuple) -> int index
+
+
 def build_edge_map(max_num_nodes=10):
     edge_map = dict()
     k = 0
@@ -22,13 +27,20 @@ def build_edge_map(max_num_nodes=10):
     return edge_map
 
 # builds dict int index -> (edge tuple)
+
+
 def build_index_map(edge_map):
-    return {v: k for k, v in edge_map.items()}
+    index_map = [None] * len(edge_map)
+    for k, v in edge_map.items():
+        index_map[v] = k
+    return index_map
 
 # builds tree from vector representing edge set
 # 1 Numbers are unique in 0...max_num_nodes
 # 2 Edges go low to high
 # 3 Going L-R over tree_vector, we add left before right
+
+
 def build_tree_from_vector(tree_vector, index_map, max_num_nodes):
     nodes = [Node(i) for i in range(max_num_nodes)]
     found_root = False
@@ -45,6 +57,8 @@ def build_tree_from_vector(tree_vector, index_map, max_num_nodes):
     return root
 
 # builds complete tree from level order traversal
+
+
 def build_tree_level_order(values):
     root = Node(values[0])
     q = [root]
@@ -62,6 +76,8 @@ def build_tree_level_order(values):
 
 # given what will be level order traversal of node values, ensures each level is sorted low to high
 # satisfies req 3 of build_tree_from_vector
+
+
 def level_sort(node_values):
     i = 0
     level_size = 1
@@ -75,26 +91,43 @@ def level_sort(node_values):
 
 # given what will be a level order traversal of node values, makes sure they will build an allowed
 # tree parents are smaller than their children and that L->R across levels is increasing
+
+
 def turn_into_valid_level_order(node_values):
     cpy = deepcopy(node_values)
     heapify(cpy)
     return level_sort(cpy)
 
+
+def print_edges(edge_set, index_map):
+    print('Edges: ', end='')
+    for i, e in enumerate(edge_set):
+        if e == 1:
+            s, d = index_map[i]
+            print(f'{s}->{d}', end='  ')
+    print()
+
+
+
 def main():
     edge_map = build_edge_map(4)
     index_map = build_index_map(edge_map)
 
-    root = build_tree_from_vector([1,0,0,1,0,1], index_map, 4)
-    print(root.data, root.left.data, root.left.left.data, root.left.left.left.data, count(root))
+    root = build_tree_from_vector([1, 0, 0, 1, 0, 1], index_map, 4)
+    print(root.data, root.left.data, root.left.left.data,
+          root.left.left.left.data, count(root))
 
-    root = build_tree_from_vector([1,0,1,1,0,0], index_map, 4)
-    print(root.data, root.left.data, root.right.data, root.left.left.data, count(root))
+    root = build_tree_from_vector([1, 0, 1, 1, 0, 0], index_map, 4)
+    print(root.data, root.left.data, root.right.data,
+          root.left.left.data, count(root))
 
-    root = build_tree_level_order([1,3,4,6])
-    print(root.data, root.left.data, root.right.data, root.left.left.data, count(root))
+    root = build_tree_level_order([1, 3, 4, 6])
+    print(root.data, root.left.data, root.right.data,
+          root.left.left.data, count(root))
 
-    values = [6,5,3,2]
+    values = [6, 5, 3, 2]
     print(turn_into_valid_level_order(values))
+
 
 if __name__ == '__main__':
     main()

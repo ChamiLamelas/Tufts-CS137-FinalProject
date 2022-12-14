@@ -6,7 +6,7 @@ import os
 import numpy as np
 import torchvision.models as models
 import torchvision.transforms as transforms
-from torchvision.models import ResNet18_Weights
+# from torchvision.models import ResNet18_Weights
 
 # https://pytorch.org/vision/main/models/generated/torchvision.models.vit_b_16.html
 # https://pytorch.org/vision/master/models.html
@@ -60,6 +60,7 @@ def untrained_tree_model():
 
 def resnet_preprocess():
     return transforms.Compose([
+        # transforms.RandomRotation(30),
         transforms.Resize(256),
         transforms.CenterCrop(224),
         transforms.ToTensor(),
@@ -68,18 +69,18 @@ def resnet_preprocess():
     ])
 
 
-def pretrained_resnet_model():
-    return torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', weights=ResNet18_Weights.DEFAULT)
+# def pretrained_resnet_model():
+#     return torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', weights=ResNet18_Weights.DEFAULT)
 
 
-def make_resnet_model(pretrained):
-    # https://discuss.pytorch.org/t/how-to-modify-the-final-fc-layer-based-on-the-torch-model/766/25?page=2
-    # https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html
-    pretrained.fc = nn.Linear(512, 10)
+# def make_resnet_model(pretrained):
+#     # https://discuss.pytorch.org/t/how-to-modify-the-final-fc-layer-based-on-the-torch-model/766/25?page=2
+#     # https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html
+#     pretrained.fc = nn.Linear(512, 10)
 
 
-def tuned_resnet_model():
-    return torch.load(os.path.join('..', 'models', 'resnet', 'digit-model.pt'))
+# def tuned_resnet_model():
+#     return torch.load(os.path.join('..', 'models', 'resnet', 'digit-model.pt'))
 
 
 def digits_predict(model, img):
@@ -129,6 +130,12 @@ def predict(model, data_loader, device, config, digits_model, show_failing=False
 
     return ncorrect / total
 
+def set_torch_vit_dropouts(model, dropout):
+    model.encoder.dropout = nn.Dropout(p=dropout, inplace=False)
+    for i in range(12):
+        exec(f'model.encoder.layers.encoder_layer_{i}.dropout=nn.Dropout(p={dropout},inplace=False)')
+        exec(f'model.encoder.layers.encoder_layer_{i}.mlp[2]=nn.Dropout(p={dropout},inplace=False)')
+        exec(f'model.encoder.layers.encoder_layer_{i}.mlp[4]=nn.Dropout(p={dropout},inplace=False)')
 
 def float_eqs(f1, f2):
     return abs(f1 - f2) < (10 ** (-6))
@@ -141,10 +148,10 @@ def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader,
 
     if digits_model is None:
         config = {'labels_key': 'digit_labels', 'model_file': 'digit-model.pt',
-                  'train_loss': 'digit_train_loss.npy', 'val_acc': 'digit_val_acc.npy'}
+                  'train_loss': 'digit_train_loss.npy', 'val_acc': 'digit_val_acc.npy', 'final_model_file': 'final-digit-model.pt'}
     else:
         config = {'labels_key': 'tree_label', 'model_file': 'tree-model.pt',
-                  'train_loss': 'tree_train_loss.npy', 'val_acc': 'tree_val_acc.npy'}
+                  'train_loss': 'tree_train_loss.npy', 'val_acc': 'tree_val_acc.npy', 'final_model_file': 'final-tree-model.pt'}
 
     optimizer = torch.optim.Adam(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -203,3 +210,4 @@ def train(model, learning_rate, weight_decay, epochs, train_loader, val_loader,
     np.save(os.path.join(
         model_dir, config['train_loss']), np.array(train_loss))
     np.save(os.path.join(model_dir, config['val_acc']), np.array(val_acc))
+    torch.save(model, os.path.join(model_dir, config['final_model_file']))

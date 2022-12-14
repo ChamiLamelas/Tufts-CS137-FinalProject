@@ -1,3 +1,5 @@
+# Authors: Chami Lamelas, Ryan Polhemus
+
 from torch.utils.data import Dataset
 import gen_dataset as gd
 import os

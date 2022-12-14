@@ -1,5 +1,6 @@
-# https://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html
-# pip install d2l==1.0.0a1.post0
+# CODE TAKEN DIRECTLY FROM DIVE TO DEEP LEARNING BOOK WITH NO MODIFICATION
+# REFERENCE: https://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html
+# INSTALLATION: pip install d2l==1.0.0a1.post0
 
 import torch
 from torch import nn

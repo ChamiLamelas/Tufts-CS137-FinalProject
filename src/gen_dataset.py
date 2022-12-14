@@ -1,3 +1,5 @@
+# Authors: Chami Lamelas, Ryan Polhemus
+
 import torchvision.datasets as datasets
 import graphviz
 # To install into conda on windows follow this answer

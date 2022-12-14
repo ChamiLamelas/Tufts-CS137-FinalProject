@@ -1,5 +1,7 @@
+# Authors: Chami Lamelas, Ryan Polhemus
+
 from collections import defaultdict
-from gen_dataset import build_edge_map
+from trees import build_edge_map, build_index_map, print_edges
 import numpy as np
 import torch
 
@@ -8,13 +10,11 @@ class Graph:
     def __init__(self, digit_labels, tree_labels):
         self.edge_map = build_edge_map()
         self.adj_lists = defaultdict(list)
-        num_nodes = digit_labels.size()[0]
-        while num_nodes > 0 and digit_labels[num_nodes - 1] == 0:
-            num_nodes -= 1
-        for n in range(num_nodes):
-            for v in range(num_nodes):
-                if n != v:
-                    self.adj_lists[n].append(v)
+        vertices = [i for i, l in enumerate(digit_labels) if l == 1]
+        for v in vertices:
+            for w in vertices:
+                if v != w:
+                    self.adj_lists[v].append(w)
         self.tree_labels = tree_labels
 
     def weight(self, u, v):
@@ -44,7 +44,10 @@ def prims(graph):
     tree = np.zeros(45, dtype=np.int32)
     for v in graph.adj_lists:
         priorities[v] = [np.inf, None]
-    priorities[0] = [0, None]
+    if len(graph.adj_lists) == 0:
+        return tree
+    min_vertex = min(v for v in graph.adj_lists)
+    priorities[min_vertex] = [0, None]
     while len(priorities) > 0:
         u, up = remove_min(priorities)
         if up is not None:
@@ -69,6 +72,32 @@ def main():
     # change 4,9 if we're interested in indices for other indexes
     edge_map = build_edge_map()
     print(edge_map[(4, 9)])
+
+    weights = torch.zeros(45)
+    weights[edge_map[(3, 4)]] = 1
+    weights[edge_map[(3, 5)]] = 1
+    weights[edge_map[(4, 6)]] = 1
+    weights[edge_map[(6, 7)]] = 1
+    weights[edge_map[(5, 8)]] = 1
+    g = Graph(torch.Tensor([0, 0, 0, 1, 1, 1, 1, 1, 1, 0]), weights)
+    g.print()
+
+    tree = prims(g)
+    print(tree)
+
+    index_map = build_index_map(edge_map)
+    print_edges(tree, index_map)
+
+    weights = torch.zeros(45)
+    weights[edge_map[(0,5)]] = 1
+    weights[edge_map[(0,6)]] = 1
+    weights[edge_map[(6,8)]] = 1
+    g = Graph(torch.Tensor([1, 0, 0, 0, 0, 1, 1, 0, 1, 0]), weights)
+    g.print()
+
+    tree = prims(g)
+    print(tree)
+    print_edges(tree, index_map)
 
 
 if __name__ == '__main__':
